@@ -26,3 +26,21 @@ install package untuk configurasi dotenv [done]
     go get -u github.com/joho/godotenv
 
 ## How To Use
+
+clone repo
+
+    git clone https://github.com/alexchtst-01/projdhim_guy.git
+
+masuk ke direktory backend
+    
+    cd backend
+
+tidy up dan install semua dependencies
+
+    go mod tidy
+
+**`pastikan di mysql terdapat database dengan nama yang sesuai pada .env`**
+
+jalankan main.go
+
+    go run main.go
