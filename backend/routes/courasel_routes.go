@@ -7,12 +7,12 @@ import (
 )
 
 func CarouselRoutes(router *gin.Engine) {
-	carouselGroup := router.Group("/carousels")
-	{
-		carouselGroup.GET("/", controllers.GetCarousels)
-		carouselGroup.GET("/:id", controllers.GetCarouselByID)
-		carouselGroup.POST("/", controllers.CreateCarousel)
-		carouselGroup.PUT("/:id", controllers.UpdateCarousel)
-		carouselGroup.DELETE("/:id", controllers.DeleteCarousel)
-	}
+
+	router.GET("/carousels", controllers.GetCarousels)
+
+	router.POST("/carousels", controllers.CreateCarousel)
+
+	router.PUT("/carousels/:id", controllers.UpdateCarousel)
+
+	router.DELETE("/carousels/:id", controllers.DeleteCarousel)
 }
