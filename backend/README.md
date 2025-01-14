@@ -29,7 +29,7 @@ install package untuk configurasi dotenv [done]
 
 clone repo
 
-    git clone https://github.com/alexchtst-01/projdhim_guy.git
+    git clone https://github.com/keepurspiritbruv/pusrinet
 
 masuk ke direktory backend
     

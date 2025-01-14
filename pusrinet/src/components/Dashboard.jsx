@@ -1,78 +1,94 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
-import DeleteMessageBox from './card/DeleteMessageBox';
-import SaveMessageBox from './card/SaveMessageBox';
-import image1 from '../assets/pusri-palembang-akan-membangun-pabrik-pusri-iiib-di-palembang.jpg';
-import image2 from '../assets/OIP.jpeg';
-import image3 from '../assets/dc3cb15b66017a297c4848099eb9d7a7.jpeg';
+import React, { useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import DeleteMessageBox from "./card/DeleteMessageBox";
+import SaveMessageBox from "./card/SaveMessageBox";
+import image1 from "../assets/pusri-palembang-akan-membangun-pabrik-pusri-iiib-di-palembang.jpg";
+import image2 from "../assets/OIP.jpeg";
+import image3 from "../assets/dc3cb15b66017a297c4848099eb9d7a7.jpeg";
+import axios from "axios";
+
+const API_URL = "http://localhost:8080/carousels";
 
 const images = {
-  'pusri-palembang-akan-membangun-pabrik-pusri-iiib-di-palembang.jpg': image1,
-  'OIP.jpeg': image2,
-  'dc3cb15b66017a297c4848099eb9d7a7.jpeg': image3
+  "pusri-palembang-akan-membangun-pabrik-pusri-iiib-di-palembang.jpg": image1,
+  "OIP.jpeg": image2,
+  "dc3cb15b66017a297c4848099eb9d7a7.jpeg": image3,
 };
 
 const Dashboard = () => {
   const [isManaging, setIsManaging] = useState(false);
-  const [carouselItems, setCarouselItems] = useState([
-    {
-      id: 1,
-      title: "Pusri IIIB Development",
-      image: 'pusri-palembang-akan-membangun-pabrik-pusri-iiib-di-palembang.jpg',
-      description: "New factory development in Palembang",
-      active: true
-    },
-    {
-      id: 2,
-      title: "Company Overview",
-      image: 'OIP.jpeg',
-      description: "PT Pupuk Sriwidjaja Facilities",
-      active: true
-    },
-    {
-      id: 3,
-      title: "Industrial Operations",
-      image: 'dc3cb15b66017a297c4848099eb9d7a7.jpeg',
-      description: "Our production facilities and operations",
-      active: true
-    }
-  ]);
-
+  const [carouselItems, setCarouselItems] = useState([]);
   const [deleteItemId, setDeleteItemId] = useState(null);
   const [isDeleteBoxVisible, setIsDeleteBoxVisible] = useState(false);
   const [isSaveBoxVisible, setIsSaveBoxVisible] = useState(false);
 
-  const handleCloseManagement = () => {
-    setIsManaging(false);
+  // Fetch carousel items (Read)
+  const fetchCarouselItems = async () => {
+    try {
+      const response = await axios.get(API_URL, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      });
+      setCarouselItems(response.data);
+    } catch (error) {
+      console.error("Error fetching carousel items:", error);
+    }
   };
 
+  useEffect(() => {
+    fetchCarouselItems();
+  }, []);
+
+  // Update items
+  const handleSaveRequest = () => {
+    setIsSaveBoxVisible(true);
+  };
+
+  const handleConfirmSave = async () => {
+    try {
+      const promises = carouselItems.map((item) =>
+        axios.put(`${API_URL}/${item.id}`, item, {
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+      await Promise.all(promises);
+      console.log("Changes saved successfully.");
+    } catch (error) {
+      console.error("Error saving carousel items:", error);
+    } finally {
+      setIsSaveBoxVisible(false);
+      setIsManaging(false);
+    }
+  };
+
+  const handleCancelSave = () => {
+    setIsSaveBoxVisible(false);
+  };
+
+  // Delete an item
   const handleDeleteRequest = (id) => {
     setDeleteItemId(id);
     setIsDeleteBoxVisible(true);
   };
 
-  const handleConfirmDelete = () => {
-    setCarouselItems(carouselItems.filter((item) => item.id !== deleteItemId));
-    setIsDeleteBoxVisible(false);
-    setDeleteItemId(null);
+  const handleConfirmDelete = async () => {
+    try {
+      await axios.delete(`${API_URL}/${deleteItemId}`, {
+        headers: { "Content-Type": "application/json" },
+      });
+      setCarouselItems(carouselItems.filter((item) => item.id !== deleteItemId));
+      console.log("Item deleted successfully.");
+    } catch (error) {
+      console.error("Error deleting item:", error);
+    } finally {
+      setIsDeleteBoxVisible(false);
+      setDeleteItemId(null);
+    }
   };
 
   const handleCancelDelete = () => {
     setIsDeleteBoxVisible(false);
     setDeleteItemId(null);
-  };
-
-  const handleSaveRequest = () => {
-    setIsSaveBoxVisible(true);
-  };
-
-  const handleConfirmSave = () => {
-    setIsSaveBoxVisible(false);
-    handleCloseManagement(); // Close management mode after saving
-  };
-
-  const handleCancelSave = () => {
-    setIsSaveBoxVisible(false);
   };
 
   return (
@@ -85,7 +101,7 @@ const Dashboard = () => {
             className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg"
           >
             <Settings size={16} />
-            {isManaging ? 'Exit Management' : 'Manage Carousel'}
+            {isManaging ? "Exit Management" : "Manage Carousel"}
           </button>
         </div>
 
@@ -93,17 +109,11 @@ const Dashboard = () => {
           <CarouselManager
             items={carouselItems}
             setItems={setCarouselItems}
-            images={images}
             onDeleteRequest={handleDeleteRequest}
             onSaveRequest={handleSaveRequest}
           />
         ) : (
-          <div className="mb-6">
-            <Carousel
-              items={carouselItems.filter((item) => item.active)}
-              images={images}
-            />
-          </div>
+          <Carousel items={carouselItems.filter((item) => item.active)} images={images} />
         )}
 
         {isDeleteBoxVisible && (
@@ -121,54 +131,42 @@ const Dashboard = () => {
             onCancel={handleCancelSave}
           />
         )}
-
-        <div className="mt-6">
-          <h2 className="sub-judul font-semibold paragraph-spacing">Sekilas Perusahaan</h2>
-          <h3 className="sub-judul-2 paragraph-spacing">
-            Selama lebih dari 50 tahun, Pusri telah memberikan kontribusi yang signifikan bagi kemajuan industri pupuk, ketahanan pangan dan kemakmuran nasional.
-          </h3>
-          <p className="paragraph-spacing">
-            PT Pupuk Sriwidjaja Palembang (Pusri) adalah perusahaan yang didirikan sebagai pelopor produsen pupuk urea di Indonesia pada tanggal 24 Desember 1959 di Palembang Sumatera Selatan, dengan nama PT Pupuk Sriwidjaja (Persero). Pusri memulai operasional usaha dengan tujuan utama untuk melaksanakan dan menunjang kebijaksanaan dan program pemerintah di bidang ekonomi dan pembangunan nasional, khususnya di industri pupuk dan kimia lainnya.
-          </p>
-        </div>
       </div>
     </div>
   );
 };
 
-const CarouselManager = ({ items, setItems, images, onDeleteRequest, onSaveRequest }) => {
-  const [editItems, setEditItems] = useState(items);
-
-  useEffect(() => {
-    setEditItems(items);
-  }, [items]);
-
+const CarouselManager = ({
+  items,
+  setItems,
+  onDeleteRequest,
+  onSaveRequest,
+}) => {
   const handleToggleActive = (id) => {
-    setEditItems(
-      editItems.map((item) =>
+    setItems(
+      items.map((item) =>
         item.id === id ? { ...item, active: !item.active } : item
       )
     );
   };
 
   const handleUpdateItem = (id, field, value) => {
-    setEditItems(
-      editItems.map((item) =>
+    setItems(
+      items.map((item) =>
         item.id === id ? { ...item, [field]: value } : item
       )
     );
   };
 
   const handleSaveChanges = () => {
-    setItems(editItems);
-    onSaveRequest(); // Show save confirmation box
+    onSaveRequest();
   };
 
   return (
     <div className="mb-6 bg-gray-50 p-4 rounded-lg">
       <h3 className="text-lg font-semibold mb-4">Carousel Management</h3>
       <div className="space-y-4">
-        {editItems.map((item) => (
+        {items.map((item) => (
           <div key={item.id} className="bg-white p-4 rounded-lg shadow">
             <div className="flex items-start gap-4">
               <img
@@ -180,13 +178,17 @@ const CarouselManager = ({ items, setItems, images, onDeleteRequest, onSaveReque
                 <input
                   type="text"
                   value={item.title}
-                  onChange={(e) => handleUpdateItem(item.id, 'title', e.target.value)}
+                  onChange={(e) =>
+                    handleUpdateItem(item.id, "title", e.target.value)
+                  }
                   className="w-full p-2 border rounded"
                   placeholder="Slide Title"
                 />
                 <textarea
                   value={item.description}
-                  onChange={(e) => handleUpdateItem(item.id, 'description', e.target.value)}
+                  onChange={(e) =>
+                    handleUpdateItem(item.id, "description", e.target.value)
+                  }
                   className="w-full p-2 border rounded"
                   placeholder="Slide Description"
                   rows="2"
@@ -251,10 +253,6 @@ const Carousel = ({ items, images }) => {
     );
   };
 
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
-  };
-
   if (items.length === 0) {
     return <div className="text-center p-4">No active slides</div>;
   }
@@ -266,7 +264,7 @@ const Carousel = ({ items, images }) => {
           <div
             key={item.id}
             className={`absolute w-full h-full transition-opacity duration-500 ease-in-out
-              ${index === currentIndex ? 'opacity-100' : 'opacity-0'}`}
+              ${index === currentIndex ? "opacity-100" : "opacity-0"}`}
           >
             <img
               src={images[item.image]}
@@ -295,17 +293,6 @@ const Carousel = ({ items, images }) => {
           >
             <ChevronRight className="w-6 h-6" />
           </button>
-
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-            {items.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-2 h-2 rounded-full transition-colors
-                  ${index === currentIndex ? 'bg-white' : 'bg-white bg-opacity-50'}`}
-              />
-            ))}
-          </div>
         </>
       )}
     </div>
